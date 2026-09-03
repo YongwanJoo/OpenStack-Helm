@@ -4,7 +4,7 @@ export OPENSTACK_RELEASE=2026.1
 export FEATURES="${OPENSTACK_RELEASE} ubuntu_noble"
 
 export BASE_DIR="${HOME}/openstack/openstack-helm"
-export OVERRIDES_DIR="${BASE_DIR}/overrides"
+export OVERRIDES_DIR="${BASE_DIR}/manifests/overrides"
 
 export OVERRIDES_URL="https://opendev.org/openstack/openstack-helm/raw/branch/master/values_overrides"
 

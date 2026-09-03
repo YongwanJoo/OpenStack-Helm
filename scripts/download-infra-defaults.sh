@@ -40,10 +40,10 @@ echo
 # ==================================================
 
 mkdir -p \
-  infrastructure/envoy-gateway \
-  infrastructure/metallb/config \
-  infrastructure/rook-ceph/cluster \
-  infrastructure/ceph-csi-drivers
+  manifests/infrastructure/envoy-gateway \
+  manifests/infrastructure/metallb/config \
+  manifests/infrastructure/rook-ceph/cluster \
+  manifests/infrastructure/ceph-csi-drivers
 
 
 # ==================================================
@@ -78,7 +78,7 @@ echo "========================================"
 echo "[1/4] Envoy Gateway ${ENVOY_GATEWAY_VERSION}"
 echo "========================================"
 
-ENVOY_OUTPUT="infrastructure/envoy-gateway/default-values-${ENVOY_GATEWAY_VERSION}.yaml"
+ENVOY_OUTPUT="manifests/infrastructure/envoy-gateway/default-values-${ENVOY_GATEWAY_VERSION}.yaml"
 
 helm show values \
   oci://docker.io/envoyproxy/gateway-helm \
@@ -100,7 +100,7 @@ echo "========================================"
 echo "[2/4] MetalLB ${METALLB_VERSION}"
 echo "========================================"
 
-METALLB_OUTPUT="infrastructure/metallb/default-values-${METALLB_VERSION}.yaml"
+METALLB_OUTPUT="manifests/infrastructure/metallb/default-values-${METALLB_VERSION}.yaml"
 
 helm show values \
   metallb/metallb \
@@ -122,7 +122,7 @@ echo "========================================"
 echo "[3/4] Rook-Ceph ${ROOK_CEPH_VERSION}"
 echo "========================================"
 
-ROOK_OUTPUT="infrastructure/rook-ceph/default-values-${ROOK_CEPH_VERSION}.yaml"
+ROOK_OUTPUT="manifests/infrastructure/rook-ceph/default-values-${ROOK_CEPH_VERSION}.yaml"
 
 helm show values \
   rook-release/rook-ceph \
@@ -149,7 +149,7 @@ echo "========================================"
 # 4-1. Ceph CSI chart 자체 공식 default values
 # --------------------------------------------------
 
-CSI_DEFAULT_OUTPUT="infrastructure/ceph-csi-drivers/default-values-${CEPH_CSI_DRIVERS_VERSION}.yaml"
+CSI_DEFAULT_OUTPUT="manifests/infrastructure/ceph-csi-drivers/default-values-${CEPH_CSI_DRIVERS_VERSION}.yaml"
 
 helm show values \
   ceph-csi-operator/ceph-csi-drivers \
@@ -171,7 +171,7 @@ echo "${CSI_DEFAULT_OUTPUT}"
 
 ROOK_CSI_VALUES_URL="${ROOK_GITHUB_RAW_BASE}/${ROOK_CEPH_VERSION}/deploy/charts/ceph-csi-drivers/values.yaml"
 
-ROOK_CSI_OUTPUT="infrastructure/ceph-csi-drivers/rook-values-${ROOK_CEPH_VERSION}.yaml"
+ROOK_CSI_OUTPUT="manifests/infrastructure/ceph-csi-drivers/rook-values-${ROOK_CEPH_VERSION}.yaml"
 
 curl -fsSL \
   "${ROOK_CSI_VALUES_URL}" \
@@ -199,7 +199,7 @@ sha256sum \
   "${ROOK_OUTPUT}" \
   "${CSI_DEFAULT_OUTPUT}" \
   "${ROOK_CSI_OUTPUT}" \
-  > infrastructure/SHA256SUMS
+  > manifests/infrastructure/SHA256SUMS
 
 
 # ==================================================
@@ -215,7 +215,7 @@ echo
 echo "Generated files:"
 echo
 
-find infrastructure \
+find manifests/infrastructure \
   -maxdepth 2 \
   -type f \
   \( -name 'default-values-*' -o -name 'rook-values-*' -o -name 'SHA256SUMS' \) \
