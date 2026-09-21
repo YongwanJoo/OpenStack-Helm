@@ -2,6 +2,8 @@
 
 여러 대의 물리 장비와 OCI VM을 WireGuard VPN으로 연결하여 하나의 사설 네트워크를 구성하고, 그 위에 Kubernetes 및 OpenStack-Helm 환경을 구축하는 프로젝트입니다.
 
+> 문서 기준 시점: 2026-09-10. Kubernetes, Rook-Ceph, OpenStack 제어 서비스, Nova/Neutron, 외부 네트워크, Horizon까지 통합 검증했습니다.
+
 ---
 
 ## 팀원 소개
@@ -46,20 +48,30 @@
   </table>
 </div>
 
+### 역할 및 기여 범위
+
+| 팀원 | 확인된 주요 기여 |
+| --- | --- |
+| 주용완 | OpenStack/OpenStack-Helm 및 kubeadm 사전 조사, 설치 전 공통 구성과 초기 Helm 트러블슈팅 문서화, README/설치 문서 정리 |
+| 정장우 | OCI/WireGuard 및 Kubernetes 구성, Rook-Ceph와 OpenStack 서비스 배포, Nova/Neutron/외부 네트워크/Horizon 통합 검증 |
+| 홍진기 | OpenStack-Helm 배치 설계, Ceph 네트워크 장애 및 MariaDB PVC/Ceph-CSI 장애 분석·문서화 |
+
+세부 분류와 근거는 [기여 근거](docs/contribution-evidence.md)에 정리했습니다. 팀 단위 결과와 개인 수행 기록을 구분하며, 기록으로 확인되지 않는 내용은 개인 기여로 확정하지 않습니다.
+
 ---
 
 ## Architecture
 
 ```text
-                         Internet
-                            │
+                    External Client
+                            │ SSH / HTTPS / API
                             ▼
                     ┌───────────────┐
-                    │   WireGuard   │
-                    │   VPN Hub     │
+                    │ OCI Public IP │
+                    │ HAProxy / NAT │
                     └───────┬───────┘
                             │
-                     10.0.0.0/24
+                    GRE over WireGuard
                             │
         ┌───────────────────┼────────────────────┐
         │                   │                    │
@@ -73,7 +85,7 @@
                             │
                  ┌──────────┴──────────┐
                  │                     │
-           Control Plane          Worker Nodes
+           Control Plane       Compute / Storage Nodes
                  │                     │
                  ▼                     ▼
               Helm ──────────► OpenStack-Helm
@@ -82,6 +94,10 @@
                  │          │         │         │          │
               Keystone   Glance   Cinder   Placement    Nova
                                                         Neutron
+                                                           │
+                                                    Tenant / External
+                                                           │
+                                                      OpenStack VM
 ```
 
 ### Kubernetes 내부 컴포넌트 구조
@@ -91,7 +107,7 @@
                            │
             ┌──────────────┼───────────────┐
             │              │               │
-          Calico        MetalLB       Gateway API
+          Calico      Rook / Ceph      Gateway API
                                            │
                                       Envoy Gateway
                                            │
@@ -175,9 +191,28 @@
 
 ---
 
+## 현재 구축 완료 범위
+
+| 영역 | 상태 | 검증 내용 |
+| --- | --- | --- |
+| WireGuard / OCI Hub | 완료 | 노드 간 VPN 통신 및 허브-스포크 경로 |
+| Kubernetes / Calico | 완료 | kubeadm v1.33.13 클러스터 및 Calico VXLAN |
+| Rook-Ceph / CSI | 완료 | 3 OSD `HEALTH_OK`, RBD PVC 동적 프로비저닝 |
+| OpenStack Backend | 완료 | MariaDB, RabbitMQ, Memcached |
+| OpenStack Core | 완료 | Keystone, Glance, Cinder, Placement |
+| Compute / Network | 완료 | Open vSwitch, Libvirt, Nova, Neutron |
+| Tenant Network | 완료 | DHCP, 서로 다른 Compute 간 VM 통신 |
+| External Network | 완료 | GRE over WireGuard, OCI NAT, Floating IP, 외부 SSH |
+| 운영 복구 | 완료 | 재부팅 후 OVS 재연결 및 경로 복구 |
+| Horizon | 완료 | HTTPS 접속, 로그인, 인스턴스 조회 |
+
+상세 상태와 판정 기준은 [구축 상태 매트릭스](docs/status-matrix.md)를 참고합니다.
+
+---
+
 ## Deployment Guide
 
-OpenStack-Helm을 기반으로 클러스터를 구축하고 각 컴포넌트를 배포하는 전체 과정을 0~5단계로 나누어 기록합니다.
+OpenStack-Helm을 기반으로 클러스터를 구축하고 각 컴포넌트를 배포·검증하는 전체 과정을 0~8단계로 기록합니다.
 
 ### 0. Kubernetes & WireGuard 설정
 사전에 모든 노드를 WireGuard VPN(`10.0.0.0/24`)으로 연결하고, kubeadm을 통해 클러스터(v1.33.13) 및 Calico CNI 인프라를 구성합니다.
@@ -200,8 +235,20 @@ OpenStack 서비스 간 데이터 저장과 메시지 통신을 위한 기반 �
 → **[상세 가이드 보기](docs/04-openstack-backend.md)**
 
 ### 5. OpenStack-Helm 핵심 요소 설치
-Keystone, Glance, Cinder, Placement 등 핵심 서비스 배포 과정 및 향후 아젠다입니다.
+Keystone, Glance, Cinder, Placement 등 핵심 서비스 배포 과정입니다.
 → **[상세 가이드 보기](docs/05-openstack-core.md)**
+
+### 6. Compute & Network 서비스
+Open vSwitch, Libvirt, Nova, Neutron을 배포하고 Compute 노드 및 데이터 플레인을 검증합니다.
+→ **[상세 가이드 보기](docs/06-openstack-compute-network.md)**
+
+### 7. Tenant & External Network
+Tenant 네트워크부터 GRE over WireGuard, OCI NAT, Floating IP, 외부 SSH까지의 최종 경로를 기록합니다.
+→ **[상세 가이드 보기](docs/07-tenant-external-network.md)**
+
+### 8. Horizon
+Horizon 배포와 HTTPS 접근, 로그인 및 인스턴스 조회 검증 과정을 기록합니다.
+→ **[상세 가이드 보기](docs/08-horizon.md)**
 
 ---
 
@@ -215,6 +262,11 @@ Keystone, Glance, Cinder, Placement 등 핵심 서비스 배포 과정 및 향�
 | [3. Storage Setup](docs/03-storage-setup.md) | 분산 스토리지 백엔드(Ceph/Rook) 아키텍처 및 배포 |
 | [4. OpenStack Backend](docs/04-openstack-backend.md) | DB 및 MQ 인프라(MariaDB, RabbitMQ, Memcached) 설정 |
 | [5. OpenStack Core](docs/05-openstack-core.md) | OpenStack 핵심 서비스(Keystone, Glance 등) 배포 |
+| [6. Compute & Network](docs/06-openstack-compute-network.md) | Open vSwitch, Libvirt, Nova, Neutron 배포와 검증 |
+| [7. Tenant & External Network](docs/07-tenant-external-network.md) | VM 네트워크, OCI NAT, Floating IP 및 외부 SSH 검증 |
+| [8. Horizon](docs/08-horizon.md) | Horizon HTTPS 접근과 대시보드 검증 |
+| [구축 상태 매트릭스](docs/status-matrix.md) | 실제 완료·부분 완료·조사 항목 구분 |
+| [기여 근거](docs/contribution-evidence.md) | 회의록, 작업 문서, Git 커밋 기반 기여 분류 |
 | [Troubleshooting](docs/troubleshooting/) | 인프라 구축 중 발생한 장애 트러블슈팅 일지 |
 
 ---
@@ -226,5 +278,6 @@ Repository에는 다음 정보를 포함하지 않습니다.
 * WireGuard Private Key / Peer Secret
 * SSH Private Key / Cloud API Key
 * 실제 인증 정보 및 운영 환경의 민감한 정보
+* 공인 IP, 내부 관리 주소, 개인 계정 및 호스트별 접속 정보
 
 필요한 설정은 예시 파일(`.env.example`, `wg0.conf.example`)을 제공하고 실제 값은 별도로 관리합니다.

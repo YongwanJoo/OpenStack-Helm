@@ -73,8 +73,9 @@ Ceph 클러스터 생성이 완료되면, OpenStack 서비스들(Glance, Cinder 
 # ceph-adapter-rook 배포
 helm upgrade --install ceph-adapter-rook openstack-helm/ceph-adapter-rook \
   --namespace openstack \
-  --values manifests/overrides/ceph-adapter-rook.yaml
+  --values <CEPH_ADAPTER_VALUES>
 ```
+`<CEPH_ADAPTER_VALUES>`에는 현재 클러스터의 Ceph pool 및 namespace 연결값이 포함됩니다. 이 파일에 Secret이 포함되는 경우 저장소에 커밋하지 않고 별도로 관리합니다.
 이 작업이 끝나면 `openstack` 네임스페이스 안에 `ceph-etc` 등의 Secret/ConfigMap이 생성되며, 이를 통해 OpenStack 서비스들이 Ceph를 스토리지로 사용할 수 있게 됩니다.
 
 ## 3. 공식 레퍼런스
