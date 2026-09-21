@@ -10,10 +10,11 @@ OpenStack의 인증 및 권한 인가(Authorization)를 전담하는 가장 핵�
 
 ### 설치 명령어
 ```bash
+source scripts/env.sh
+
 helm upgrade --install keystone openstack-helm/keystone \
   --namespace openstack \
-  -f manifests/overrides/keystone.yaml \
-  -f manifests/custom/keystone.yaml
+  -f "manifests/overrides/keystone/${OPENSTACK_RELEASE}-${OPENSTACK_FEATURE}.yaml"
 ```
 
 배포 완료 후, Keystone API가 정상 응답하는지 파드 상태를 점검합니다.
@@ -31,8 +32,8 @@ helm osh wait-for-pods openstack
 ```bash
 helm upgrade --install glance openstack-helm/glance \
   --namespace openstack \
-  -f manifests/overrides/glance.yaml \
-  -f manifests/custom/glance.yaml
+  -f "manifests/overrides/glance/${OPENSTACK_RELEASE}-${OPENSTACK_FEATURE}.yaml" \
+  -f manifests/custom/glance/values.yaml
 ```
 
 ## 3. Cinder (Block Storage) 배포
@@ -45,8 +46,7 @@ helm upgrade --install glance openstack-helm/glance \
 ```bash
 helm upgrade --install cinder openstack-helm/cinder \
   --namespace openstack \
-  -f manifests/overrides/cinder.yaml \
-  -f manifests/custom/cinder.yaml
+  -f "manifests/overrides/cinder/${OPENSTACK_RELEASE}-${OPENSTACK_FEATURE}.yaml"
 ```
 
 ## 4. Placement (Resource) 배포
@@ -57,8 +57,7 @@ helm upgrade --install cinder openstack-helm/cinder \
 ```bash
 helm upgrade --install placement openstack-helm/placement \
   --namespace openstack \
-  -f manifests/overrides/placement.yaml \
-  -f manifests/custom/placement.yaml
+  -f "manifests/overrides/placement/${OPENSTACK_RELEASE}-${OPENSTACK_FEATURE}.yaml"
 ```
 
 ---
@@ -66,16 +65,10 @@ helm upgrade --install placement openstack-helm/placement \
 ## 5. 공식 레퍼런스
 * [OpenStack-Helm Core Deployment Guide](https://docs.openstack.org/openstack-helm/latest/install/openstack.html)
 
-## 향후 진행할 핵심 구성 (Next Steps)
+## 다음 단계
 
-현재 제어 영역(Control Plane) API 구성이 대부분 마무리된 상태입니다. 이후 실제 가상머신을 구동하기 위해 다음 단계들을 순차적으로 진행할 예정입니다.
+제어 영역 배포 이후의 작업은 완료됐으며 다음 문서로 이어집니다.
 
-1. **네트워크 데이터 플레인 배포 (Open vSwitch → Neutron)**
-   * 컴퓨트 노드 간 통신(WireGuard `wg0`)과 외부 통신(Provider Network, `br-ex`)을 위한 물리 NIC 맵핑 구성
-   * 가상 네트워크 스위치 및 라우팅 인프라 구성
-2. **컴퓨트 노드 배포 (Libvirt → Nova)**
-   * 하이퍼바이저(KVM/QEMU)를 관리하는 Libvirt 데몬 배포
-   * Compute 노드 자원을 등록하고 인스턴스 스케줄링을 담당할 Nova 배포
-3. **사용자 인터페이스 (Horizon)**
-   * 구축된 모든 자원을 쉽게 관리하기 위한 웹 대시보드(Horizon) 배포
-   * MetalLB IPAddressPool 연동 및 Envoy Gateway HTTPRoute 구성을 통한 외부 공인 트래픽 라우팅
+1. [6단계: OpenStack Compute & Network](06-openstack-compute-network.md)
+2. [7단계: Tenant & External Network](07-tenant-external-network.md)
+3. [8단계: Horizon](08-horizon.md)

@@ -11,13 +11,15 @@ Kubernetes 클러스터 내부에 띄워진 서비스(Pod)들은 기본적으로
 ### 1.1 설치 명령어
 공식 Helm 리포지토리를 추가하고 MetalLB를 배포합니다.
 ```bash
+source scripts/env.sh
+
 helm repo add metallb https://metallb.github.io/metallb
 helm repo update
 
 helm install metallb metallb/metallb \
   -n metallb-system \
   --create-namespace \
-  --version 0.13.12
+  --version "$METALLB_VERSION"
 ```
 
 설치 후 `metallb-system` 네임스페이스의 controller와 speaker 파드가 정상적으로 Running 상태가 되는지 확인합니다.

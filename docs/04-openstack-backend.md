@@ -8,14 +8,12 @@ OpenStack의 거의 모든 서비스(Keystone, Nova, Neutron, Cinder 등)는 각
 
 ### 설치 명령어
 ```bash
-# 기본 설정 다운로드 (get-values-overrides 활용)
-helm osh get-values-overrides -p /path/to/manifests -c mariadb
+source scripts/env.sh
 
 # 배포 실행
 helm upgrade --install mariadb openstack-helm/mariadb \
   --namespace openstack \
-  -f manifests/overrides/mariadb.yaml \
-  -f manifests/custom/mariadb.yaml
+  -f "manifests/overrides/mariadb/${OPENSTACK_RELEASE}-${OPENSTACK_FEATURE}.yaml"
 ```
 배포 후 MariaDB 파드가 Ceph-CSI 기반의 PVC(`general` StorageClass)를 정상적으로 할당받았는지 확인합니다.
 ```bash
@@ -27,7 +25,7 @@ kubectl get pvc -n openstack | grep mariadb
 OpenStack 서비스들은 컴포넌트 간 통신(RPC, Remote Procedure Call)을 위해 AMQP 기반의 메시지 큐 시스템을 광범위하게 사용합니다. 예를 들어, Nova-API가 VM 생성 요청을 받으면 메시지 큐를 통해 Nova-Compute 노드로 작업을 위임합니다.
 
 ### 커스텀 설정 (Replica 조정)
-우리 클러스터 규모나 리소스 상황에 맞게 Replica 수를 1개로 고정하여 가볍게 운영할 수 있습니다. `manifests/custom/rabbitmq.yaml`을 생성하여 다음 내용을 추가합니다.
+우리 클러스터 규모나 리소스 상황에 맞게 Replica 수를 1개로 고정하여 가볍게 운영할 수 있습니다. 현재 설정은 `manifests/custom/rabbitmq/values.yaml`에서 관리합니다.
 ```yaml
 pod:
   replicas:
@@ -39,8 +37,8 @@ pod:
 # 배포 실행
 helm upgrade --install rabbitmq openstack-helm/rabbitmq \
   --namespace openstack \
-  -f manifests/overrides/rabbitmq.yaml \
-  -f manifests/custom/rabbitmq.yaml
+  -f "manifests/overrides/rabbitmq/${OPENSTACK_RELEASE}-${OPENSTACK_FEATURE}.yaml" \
+  -f manifests/custom/rabbitmq/values.yaml
 ```
 
 ## 3. Memcached (캐싱) 배포
@@ -50,8 +48,7 @@ OpenStack의 인증 토큰 관리 서비스(Keystone) 및 기타 API 서비스�
 ### 설치 명령어
 ```bash
 helm upgrade --install memcached openstack-helm/memcached \
-  --namespace openstack \
-  -f manifests/overrides/memcached.yaml
+  --namespace openstack
 ```
 
 ---
