@@ -2,8 +2,6 @@
 
 여러 대의 물리 장비와 OCI VM을 WireGuard VPN으로 연결하여 하나의 사설 네트워크를 구성하고, 그 위에 Kubernetes 및 OpenStack-Helm 환경을 구축하는 프로젝트입니다.
 
-> 문서 기준 시점: 2026-09-10. Kubernetes, Rook-Ceph, OpenStack 제어 서비스, Nova/Neutron, 외부 네트워크, Horizon까지 통합 검증했습니다.
-
 ---
 
 ## 팀원 소개
@@ -54,9 +52,7 @@
 | --- | --- |
 | 주용완 | OpenStack/OpenStack-Helm 및 kubeadm 사전 조사, 설치 전 공통 구성과 초기 Helm 트러블슈팅 문서화, README/설치 문서 정리 |
 | 정장우 | OCI/WireGuard 및 Kubernetes 구성, Rook-Ceph와 OpenStack 서비스 배포, Nova/Neutron/외부 네트워크/Horizon 통합 검증 |
-| 홍진기 | OpenStack-Helm 배치 설계, Ceph 네트워크 장애 및 MariaDB PVC/Ceph-CSI 장애 분석·문서화 |
-
-세부 분류와 근거는 [기여 근거](docs/contribution-evidence.md)에 정리했습니다. 팀 단위 결과와 개인 수행 기록을 구분하며, 기록으로 확인되지 않는 내용은 개인 기여로 확정하지 않습니다.
+| 홍진기 | OpenStack-Helm 배치 설계, Ceph 네트워크 장애 분석·문서화 |
 
 ---
 
@@ -206,8 +202,6 @@
 | 운영 복구 | 완료 | 재부팅 후 OVS 재연결 및 경로 복구 |
 | Horizon | 완료 | HTTPS 접속, 로그인, 인스턴스 조회 |
 
-상세 상태와 판정 기준은 [구축 상태 매트릭스](docs/status-matrix.md)를 참고합니다.
-
 ---
 
 ## Deployment Guide
@@ -266,7 +260,6 @@ Horizon 배포와 HTTPS 접근, 로그인 및 인스턴스 조회 검증 과정�
 | [7. Tenant & External Network](docs/07-tenant-external-network.md) | VM 네트워크, OCI NAT, Floating IP 및 외부 SSH 검증 |
 | [8. Horizon](docs/08-horizon.md) | Horizon HTTPS 접근과 대시보드 검증 |
 | [구축 상태 매트릭스](docs/status-matrix.md) | 실제 완료·부분 완료·조사 항목 구분 |
-| [기여 근거](docs/contribution-evidence.md) | 회의록, 작업 문서, Git 커밋 기반 기여 분류 |
 | [Troubleshooting](docs/troubleshooting/) | 인프라 구축 중 발생한 장애 트러블슈팅 일지 |
 
 ---
